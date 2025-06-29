@@ -28,25 +28,26 @@ def log_request(ip, method, path, status_code):
     print(f"[{now}] {ip} {method} {path} {status_code} {status_text}")
 
 
-def handle_client(client_socket, client_address):
-   request_bytes = client_socket.recv(1024)
-   ip = client_address[0]
+def handle_client(client_socket, client_address,):
+    request_bytes = client_socket.recv(1024)
+    ip = client_address[0]
 
-   request_text = request_bytes.decode("utf-8", errors="ignore")
-   request_line = request_text.splitlines()[0] if request_text else ""
-   parts = request_line.split()
+    request_text = request_bytes.decode("utf-8", errors="ignore")
+    request_line = request_text.splitlines()[0] if request_text else ""
+    parts = request_line.split()
 
-   method, path = parts[0], parts[1] if len(parts) >= 2 else ("GET","/")
+    method, path = parts[0], parts[1] if len(parts) >= 2 else ("GET","/")
+    if path.startswith("/static/"):
+        response = static_processing.handle_static(path)
+    else:
+        response = http_handler.handle_route(path)
 
-   response = handler_http_request(request_bytes, routes)
+    status_line = response. decode(errors="ignore").splitlines()[0]
+    status_code = int(status_line.split()[1])
 
-   status_line = response. decode(errors="ignore").splitlines()[0]
-   status_code = int(status_line.split()[1])
-
-   log_request(ip, method, path, status_code)
-
-   client_socket.send(response)
-   client_socket.close()
+    log_request(ip, method, path, status_code)
+    client_socket.send(response)
+    client_socket.close()
 
 while True:
     client, addr = server.accept()
